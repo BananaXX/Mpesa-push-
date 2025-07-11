@@ -5,6 +5,7 @@ require('dotenv').config();
 
 const app = express();
 app.use(express.json());
+app.use(express.static('public'));  // Serve frontend files
 
 const {
   MPESA_CONSUMER_KEY,
@@ -16,7 +17,6 @@ const {
   MPESA_BASE_URL
 } = process.env;
 
-// Generate Access Token
 async function getAccessToken() {
   const auth = Buffer.from(`${MPESA_CONSUMER_KEY}:${MPESA_CONSUMER_SECRET}`).toString('base64');
   const response = await axios.get(`${MPESA_BASE_URL}/oauth/v1/generate?grant_type=client_credentials`, {
@@ -25,7 +25,6 @@ async function getAccessToken() {
   return response.data.access_token;
 }
 
-// STK Push Endpoint
 app.post('/stkpush', async (req, res) => {
   const { phone, amount } = req.body;
   try {
@@ -44,28 +43,24 @@ app.post('/stkpush', async (req, res) => {
       PhoneNumber: phone,
       CallBackURL: MPESA_CALLBACK_URL,
       AccountReference: MPESA_ACCOUNT_REF,
-      TransactionDesc: 'Payment to Baynex'
+      TransactionDesc: 'Baynex Payment'
     };
 
     const response = await axios.post(`${MPESA_BASE_URL}/mpesa/stkpush/v1/processrequest`, stkPushRequest, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`
-      }
+      headers: { Authorization: `Bearer ${accessToken}` }
     });
 
     res.json({ success: true, data: response.data });
   } catch (error) {
-    console.error('STK Push Error:', error.response ? error.response.data : error.message);
+    console.error(error.response ? error.response.data : error.message);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// Callback URL to receive M-PESA confirmation
 app.post('/callback', (req, res) => {
-  console.log('Callback received:', JSON.stringify(req.body, null, 2));
-  res.json({ resultCode: 0, resultDesc: 'Success' });
+  console.log('Callback:', JSON.stringify(req.body, null, 2));
+  res.json({ resultCode: 0, resultDesc: 'Accepted' });
 });
 
-// Start Server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Baynex M-PESA server running on port ${PORT}`));
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log(`Baynex M-PESA server running on ${PORT}`));
