@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Baynex M-PESA Payment</title>
+  <style>
+    body { background-color: #000; color: #fff; font-family: Arial; display: flex; flex-direction: column; align-items: center; margin-top: 100px; }
+    input, button { padding: 10px; margin: 10px; border-radius: 5px; }
+    button { background-color: orange; border: none; color: white; font-weight: bold; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <h1>Baynex M-PESA Payment</h1>
+  <input type="text" id="phone" placeholder="Enter Phone (2547...)" />
+  <input type="number" id="amount" placeholder="Enter Amount" />
+  <button onclick="sendPayment()">Pay Now</button>
+
+  <p id="status"></p>
+
+  <script>
+    async function sendPayment() {
+      const phone = document.getElementById('phone').value;
+      const amount = document.getElementById('amount').value;
+      const status = document.getElementById('status');
+
+      if (!phone || !amount) {
+        status.innerText = 'Please enter phone and amount';
+        return;
+      }
+
+      status.innerText = 'Processing...';
+
+      try {
+        const res = await fetch('/stkpush', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone, amount })
+        });
+        const data = await res.json();
+        if (data.success) {
+          status.innerText = 'Payment Prompt Sent!';
+        } else {
+          status.innerText = 'Failed: ' + data.error;
+        }
+      } catch (err) {
+        status.innerText = 'Error: ' + err.message;
+      }
+    }
+  </script>
+
+</body>
+</html>
